@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ScanCamera</string>
+    <string name="btn">StarScan</string>
+    <string name="stop">StopScan</string>
+    <string name="show_information">Place barcode completely inside viewfinder</string>
+</resources>

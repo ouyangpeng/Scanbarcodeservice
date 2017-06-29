@@ -16,7 +16,6 @@ import android.widget.LinearLayout;
 
 import com.honeywell.barcode.HSMDecodeComponent;
 import com.honeywell.camera.CameraManager;
-import com.scanservice.R;
 
 
 public class FxService extends Service {

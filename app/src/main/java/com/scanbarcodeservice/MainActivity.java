@@ -7,7 +7,6 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 
-import com.scanservice.R;
 
 public class MainActivity extends AppCompatActivity {
     Button btnopen;
@@ -22,26 +21,33 @@ public class MainActivity extends AppCompatActivity {
         btnopen.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent();
-                intent.setClass(MainActivity.this, ScanServices.class);
-                startService(intent);
 
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Intent intent = new Intent();
+                        intent.setClass(MainActivity.this, ScanServices.class);
+                        startService(intent);
+                    }
+                }).start();
             }
         });
         btnclose.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                Intent intent = new Intent();
+                intent.setClass(MainActivity.this, ScanServices.class);
+                stopService(intent);
             }
         });
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_F4||keyCode==KeyEvent.KEYCODE_F5) {
+        if (keyCode == KeyEvent.KEYCODE_F4 || keyCode == KeyEvent.KEYCODE_F5) {
             Intent intent = new Intent();
             intent.setAction("keycode.f4.down");
-            this.sendOrderedBroadcast(intent,null);
+            this.sendOrderedBroadcast(intent, null);
         }
 
         return super.onKeyDown(keyCode, event);

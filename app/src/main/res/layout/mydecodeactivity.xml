@@ -4,12 +4,13 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:id="@+id/float_id"
-    android:background="@drawable/gradient">
 
+  >
     <com.honeywell.barcode.HSMDecodeComponent
         android:id="@+id/hsm_decodeComponent"
         android:layout_width="180dp"
         android:layout_height="320dp"
+        android:visibility="invisible"
         android:layout_margin="5dp" />
 
     <EditText

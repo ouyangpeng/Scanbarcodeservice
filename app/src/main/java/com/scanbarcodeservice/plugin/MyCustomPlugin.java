@@ -10,7 +10,7 @@ import com.honeywell.barcode.HSMDecodeResult;
 import com.honeywell.plugins.PluginResultListener;
 import com.honeywell.plugins.SwiftPlugin;
 import com.scanbarcodeservice.FxService;
-import com.scanservice.R;
+import com.scanbarcodeservice.R;
 
 import java.util.List;
 

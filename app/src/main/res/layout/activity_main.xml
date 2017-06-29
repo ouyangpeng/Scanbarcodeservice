@@ -4,17 +4,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context="com.scanbarcodeservice.MainActivity">
 
     <Button
+        android:id="@+id/btn_open"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/btn_open"
         android:text="打开" />
 
     <Button
+        android:id="@+id/btn_close"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/btn_close"
         android:text="关闭" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 </LinearLayout>

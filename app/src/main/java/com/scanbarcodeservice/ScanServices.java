@@ -25,7 +25,6 @@ import com.honeywell.license.ActivationManager;
 import com.honeywell.license.ActivationResult;
 import com.honeywell.plugins.PluginManager;
 import com.honeywell.plugins.decode.DecodeResultListener;
-import com.scanservice.R;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -103,8 +102,9 @@ public class ScanServices extends Service implements DecodeResultListener {
     @Override
     public void onCreate() {
         super.onCreate();
-        preferencesUitl =SharedPreferencesUitl.getInstance(this, "setscan");
+        preferencesUitl = SharedPreferencesUitl.getInstance(this, "setscan");
         initAPI();
+        hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);
         handler = new Handler();
         intentFilter();
         //震动
@@ -119,7 +119,7 @@ public class ScanServices extends Service implements DecodeResultListener {
             Toast.makeText(this, "Activation Result: " + activationResult, Toast.LENGTH_LONG).show();
             //get the singleton instance of the decoder
             hsmDecoder = HSMDecoder.getInstance(this);
-            hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);
+//            hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);
             //set all decoder related settings
 //            hsmDecoder.enableSymbology(Symbology.UPCA);
 //            hsmDecoder.enableSymbology(Symbology.CODE128);
@@ -615,7 +615,8 @@ public class ScanServices extends Service implements DecodeResultListener {
 
 
     }
-    private void  initEnableDecode(){
+
+    private void initEnableDecode() {
         hsmDecoder.enableSymbology(UPCA);
         hsmDecoder.enableSymbology(UPCA_2CHAR_ADDENDA);
         hsmDecoder.enableSymbology(UPCA_5CHAR_ADDENDA);
@@ -661,6 +662,7 @@ public class ScanServices extends Service implements DecodeResultListener {
         hsmDecoder.enableSymbology(KOREA_POST);
         hsmDecoder.enableSymbology(OCR);
     }
+
     private String[] items = {"UPCA", "UPCA_2CHAR_ADDENDA", "UPCA_5CHAR_ADDENDA", "UPCE0", "UPCE1",
             "UPCE_EXPAND", "UPCE_2CHAR_ADDENDA", "UPCE_5CHAR_ADDENDA", "EAN8", "EAN8_2CHAR_ADDENDA",
             "EAN8_5CHAR_ADDENDA", "EAN13", "EAN13_2CHAR_ADDENDA", "EAN13_5CHAR_ADDENDA", "EAN13_ISBN",
@@ -722,9 +724,9 @@ public class ScanServices extends Service implements DecodeResultListener {
             if (preferencesUitl.read(isVibrator, true)) {
                 vibrator.vibrate(new long[]{100, 10, 10, 100}, -1);
             }
-            boolean b=preferencesUitl.read(isSaveImage, true);
+            boolean b = preferencesUitl.read(isSaveImage, true);
             if (b) {
-            saveImage(hsmDecoder.getLastBarcodeImage(firstResult.getBarcodeBounds()));
+                saveImage(hsmDecoder.getLastBarcodeImage(firstResult.getBarcodeBounds()));
             }
 
         }

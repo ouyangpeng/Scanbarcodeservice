@@ -7,12 +7,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemProperties;
 import android.os.Vibrator;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
@@ -31,6 +33,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import static android.R.attr.path;
 import static com.honeywell.barcode.Symbology.AZTEC;
 import static com.honeywell.barcode.Symbology.C128_ISBT;
 import static com.honeywell.barcode.Symbology.CODABAR;
@@ -749,7 +752,7 @@ public class ScanServices extends Service implements DecodeResultListener {
      *
      * @param bmp
      */
-    public static void saveImage(Bitmap bmp) {
+    public void saveImage(Bitmap bmp) {
         File appDir = new File(Environment.getExternalStorageDirectory(), "Boohee");
         if (!appDir.exists()) {
             appDir.mkdir();
@@ -766,6 +769,15 @@ public class ScanServices extends Service implements DecodeResultListener {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        // 其次把文件插入到系统图库
+        try {
+            MediaStore.Images.Media.insertImage(ScanServices.this.getContentResolver(),
+                    file.getAbsolutePath(), fileName, null);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        // 最后通知图库更新
+        ScanServices.this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + path)));
     }
 
 }

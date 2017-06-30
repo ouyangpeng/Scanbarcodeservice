@@ -88,7 +88,7 @@ public class ScanServices extends Service implements DecodeResultListener {
     private HSMDecoder hsmDecoder;
     private String RECE_DATA_ACTION = "com.se4500.onDecodeComplete";
     private String START_SCAN_ACTION = "com.geomobile.se4500barcode";
-    private String STOP_SCAN_ACTION = "com.geomobile.se4500barcode.poweroff";
+    private String STOP_SCAN_ACTION = "com.geomobile.se4500barcodestop";
     private String OPEN_CAMERA = "com.se4500.opencamera";
     private String CLOSE_CAMERA = "com.se4500.closecamera";
     private Handler handler;

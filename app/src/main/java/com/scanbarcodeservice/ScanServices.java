@@ -106,6 +106,7 @@ public class ScanServices extends Service implements DecodeResultListener {
     public void onCreate() {
         super.onCreate();
         preferencesUitl = SharedPreferencesUitl.getInstance(this, "setscan");
+        SystemProperties.set("persist.sys.scancamera", "front");
         initAPI();
         hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);
         handler = new Handler();

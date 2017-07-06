@@ -1,5 +1,6 @@
 package com.scanbarcodeservice;
 
+import android.app.ActivityManager;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -32,6 +33,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import static android.R.attr.path;
 import static com.honeywell.barcode.Symbology.AZTEC;
@@ -113,6 +115,7 @@ public class ScanServices extends Service implements DecodeResultListener {
         intentFilter();
         //震动
         vibrator = (Vibrator) getSystemService(Service.VIBRATOR_SERVICE);
+
     }
 
 
@@ -214,6 +217,8 @@ public class ScanServices extends Service implements DecodeResultListener {
             switch (state) {
                 case "com.setscan.enablescan":
 //                    isVibrator = (Boolean) intent.getExtras().get("enableDecode");
+                    break;
+                case "com.setscan.front":
                     break;
                 case "com.setscan.showdecode":
                     preferencesUitl.write(isShowdecode, (Boolean) intent.getExtras().get("enableDecode"));
@@ -690,9 +695,35 @@ public class ScanServices extends Service implements DecodeResultListener {
     public void onDestroy() {
         super.onDestroy();
         unregisterReceiver(receiver);
+
 //        hsmDecoder.disposeInstance();
         hsmDecoder.removeResultListener(this);
-        stopService(Myintent);
+
+        if(isWorked(this)){
+            stopService(Myintent);
+        }
+//
+    }
+
+    /**
+     * 判断某个服务是否正在运行的方法
+     *
+
+     *   是包名+服务的类名（例如：net.loonggg.testbackstage.TestService）
+     * @return true代表正在运行，false代表服务没有正在运行
+     */
+    public static boolean isWorked(Context context)
+    {
+        ActivityManager myManager=(ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        ArrayList<ActivityManager.RunningServiceInfo> runningService = (ArrayList<ActivityManager.RunningServiceInfo>) myManager.getRunningServices(30);
+        for(int i = 0 ; i<runningService.size();i++)
+        {
+            if(runningService.get(i).service.getClassName().toString().equals("com.scanbarcodeservice.FxService"))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -780,5 +811,6 @@ public class ScanServices extends Service implements DecodeResultListener {
         // 最后通知图库更新
         ScanServices.this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + path)));
     }
+
 
 }

@@ -103,19 +103,19 @@ public class ScanServices extends Service implements DecodeResultListener {
     private String TAG = "scan";
     private String[] array;
     private boolean[] isDecodeFlag;
+    private boolean isfront; //记录前置后置的变量
 
     @Override
     public void onCreate() {
         super.onCreate();
         preferencesUitl = SharedPreferencesUitl.getInstance(this, "setscan");
-        SystemProperties.set("persist.sys.scancamera", "front");
         initAPI();
-        hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);
         handler = new Handler();
         intentFilter();
         //震动
         vibrator = (Vibrator) getSystemService(Service.VIBRATOR_SERVICE);
-
+        hsmDecoder.enableFlashOnDecode(preferencesUitl.read(isFlash, true));
+        hsmDecoder.enableSound(preferencesUitl.read(isSound, true));
     }
 
 
@@ -126,6 +126,13 @@ public class ScanServices extends Service implements DecodeResultListener {
             Toast.makeText(this, "Activation Result: " + activationResult, Toast.LENGTH_LONG).show();
             //get the singleton instance of the decoder
             hsmDecoder = HSMDecoder.getInstance(this);
+            if ("front".equals(SystemProperties.get("persist.sys.scancamera"))){
+                hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);
+                isfront = true;
+            }else if ("back".equals(SystemProperties.get("persist.sys.scancamera"))){
+                hsmDecoder.setActiveCamera(ActiveCamera.REAR_FACING);
+                isfront = false;
+            }
 //            hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);
             //set all decoder related settings
 //            hsmDecoder.enableSymbology(Symbology.UPCA);
@@ -140,7 +147,7 @@ public class ScanServices extends Service implements DecodeResultListener {
 //            hsmDecoder.enableSymbology(Symbology.SYMS);
 //            hsmDecoder.enableFlashOnDecode(false);
             initEnableDecode();
-            hsmDecoder.enableSound(true);
+//            hsmDecoder.enableSound(true);
 //            enableDecodeFlag();
             hsmDecoder.enableAimer(true);
             hsmDecoder.setAimerColor(Color.RED);
@@ -200,6 +207,19 @@ public class ScanServices extends Service implements DecodeResultListener {
         public void onReceive(Context context, Intent intent) {
             String state = intent.getAction();
             if (state.equals(START_SCAN_ACTION) || state.equals("keycode.f4.down")) {
+                if ("front".equals(SystemProperties.get("persist.sys.scancamera"))){
+                    if (!isfront){
+                        hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);
+                        isfront = true;
+                    }
+
+                }else if ("back".equals(SystemProperties.get("persist.sys.scancamera"))){
+                    if (isfront){
+                        hsmDecoder.setActiveCamera(ActiveCamera.REAR_FACING);
+                        isfront = false;
+                    }
+
+                }
                 Myintent.setClass(context, FxService.class);
                 context.startService(Myintent);
 //                handler.removeCallbacks(runnable);

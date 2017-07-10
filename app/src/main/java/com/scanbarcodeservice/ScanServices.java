@@ -122,7 +122,7 @@ public class ScanServices extends Service implements DecodeResultListener {
     private void initAPI() {
         try {
             //activate the API with your license key
-            ActivationResult activationResult = ActivationManager.activate(this, "trial-speed-tjian-03162017");
+            ActivationResult activationResult = ActivationManager.activate(this, "trial-jingt-tjian-05152017");
             Toast.makeText(this, "Activation Result: " + activationResult, Toast.LENGTH_LONG).show();
             //get the singleton instance of the decoder
             hsmDecoder = HSMDecoder.getInstance(this);
@@ -139,16 +139,18 @@ public class ScanServices extends Service implements DecodeResultListener {
 //            hsmDecoder.enableSymbology(Symbology.CODE128);
 //            hsmDecoder.enableSymbology(Symbology.CODE39);
 //            hsmDecoder.enableSymbology(Symbology.QR);
-//            hsmDecoder.enableSymbology(EAN13);
 //            hsmDecoder.enableSymbology(Symbology.CODE39);
 //            hsmDecoder.enableSymbology(Symbology.CODABAR);
 //            hsmDecoder.enableSymbology(Symbology.EAN13_2CHAR_ADDENDA);
 //            hsmDecoder.enableSymbology(Symbology.UPCA_2CHAR_ADDENDA);
 //            hsmDecoder.enableSymbology(Symbology.SYMS);
 //            hsmDecoder.enableFlashOnDecode(false);
-            initEnableDecode();
 //            hsmDecoder.enableSound(true);
 //            enableDecodeFlag();
+
+//            hsmDecoder.enableSymbology(SYMS);//全部使能
+            initEnableDecode();
+
             hsmDecoder.enableAimer(true);
             hsmDecoder.setAimerColor(Color.RED);
             hsmDecoder.setOverlayText(getString(R.string.show_information));
@@ -158,7 +160,6 @@ public class ScanServices extends Service implements DecodeResultListener {
             //create plug-in instance and add a result listener
 //            customPlugin = new MyCustomPlugin(this);
 //            customPlugin.addResultListener(this);
-
             //register the plug-in with the system
 //            hsmDecoder.registerPlugin(customPlugin);
 
@@ -373,28 +374,34 @@ public class ScanServices extends Service implements DecodeResultListener {
                     break;
                 case "EAN13":
                     if (b) {
-                        hsmDecoder.enableSymbology(EAN13);
+
+                        aa = hsmDecoder.enableSymbology(EAN13);
+                        Log.i(TAG, "EAN13: " + aa);
                     } else {
                         hsmDecoder.disableSymbology(EAN13);
+
                     }
                     break;
                 case "EAN13_2CHAR_ADDENDA":
                     if (b) {
-                        hsmDecoder.enableSymbology(EAN13_2CHAR_ADDENDA);
+                        ab = hsmDecoder.enableSymbology(EAN13_2CHAR_ADDENDA);
+                        Log.i(TAG, "EAN13_2CHAR_ADDENDA: " + ab);
                     } else {
                         hsmDecoder.disableSymbology(EAN13_2CHAR_ADDENDA);
                     }
                     break;
                 case "EAN13_5CHAR_ADDENDA":
                     if (b) {
-                        hsmDecoder.enableSymbology(EAN13_5CHAR_ADDENDA);
+                        ac = hsmDecoder.enableSymbology(EAN13_5CHAR_ADDENDA);
+                        Log.i(TAG, "EAN13_5CHAR_ADDENDA: " + ac);
                     } else {
                         hsmDecoder.disableSymbology(EAN13_5CHAR_ADDENDA);
                     }
                     break;
                 case "EAN13_ISBN":
                     if (b) {
-                        hsmDecoder.enableSymbology(EAN13_ISBN);
+                        ad = hsmDecoder.enableSymbology(EAN13_ISBN);
+                        Log.i(TAG, "EAN13_ISBN: " + ad);
                     } else {
                         hsmDecoder.disableSymbology(EAN13_ISBN);
                     }
@@ -644,8 +651,13 @@ public class ScanServices extends Service implements DecodeResultListener {
 
 
     }
+    boolean aa;
+    boolean ab;
+    boolean ac;
+    boolean ad;
 
     private void initEnableDecode() {
+
         hsmDecoder.enableSymbology(UPCA);
         hsmDecoder.enableSymbology(UPCA_2CHAR_ADDENDA);
         hsmDecoder.enableSymbology(UPCA_5CHAR_ADDENDA);
@@ -655,10 +667,16 @@ public class ScanServices extends Service implements DecodeResultListener {
         hsmDecoder.enableSymbology(EAN8);
         hsmDecoder.enableSymbology(EAN8_2CHAR_ADDENDA);
         hsmDecoder.enableSymbology(EAN8_5CHAR_ADDENDA);
-        hsmDecoder.enableSymbology(EAN13);
-        hsmDecoder.enableSymbology(EAN13_2CHAR_ADDENDA);
-        hsmDecoder.enableSymbology(EAN13_5CHAR_ADDENDA);
-        hsmDecoder.enableSymbology(EAN13_ISBN);
+
+        aa = hsmDecoder.enableSymbology(EAN13);
+        Log.i(TAG, "EAN13: " + aa);
+        ab = hsmDecoder.enableSymbology(EAN13_2CHAR_ADDENDA);
+        Log.i(TAG, "EAN13_2CHAR_ADDENDA: " + ab);
+        ac = hsmDecoder.enableSymbology(EAN13_5CHAR_ADDENDA);
+        Log.i(TAG, "EAN13_5CHAR_ADDENDA: " + ac);
+        ad = hsmDecoder.enableSymbology(EAN13_ISBN);
+        Log.i(TAG, "EAN13_ISBN: " + ad);
+
         hsmDecoder.enableSymbology(CODE128);
         hsmDecoder.enableSymbology(GS1_128);
         hsmDecoder.enableSymbology(C128_ISBT);
@@ -690,6 +708,7 @@ public class ScanServices extends Service implements DecodeResultListener {
         hsmDecoder.enableSymbology(HK25);
         hsmDecoder.enableSymbology(KOREA_POST);
         hsmDecoder.enableSymbology(OCR);
+
     }
 
     private String[] items = {"UPCA", "UPCA_2CHAR_ADDENDA", "UPCA_5CHAR_ADDENDA", "UPCE0", "UPCE1",
@@ -699,6 +718,8 @@ public class ScanServices extends Service implements DecodeResultListener {
             "M25", "CODE93", "CODE11", "CODABAR", "TELEPEN", "MSI", "RSS_14", "RSS_LIMITED", "RSS_EXPANDED",
             "CODABLOCK_F", "PDF417", "MICROPDF", "COMPOSITE", "COMPOSITE_WITH_UPC", "AZTEC", "MAXICODE",
             "DATAMATRIX", "DATAMATRIX_RECTANGLE", "QR", "HANXIN", "HK25", "KOREA_POST", "OCR"};
+
+
     /**
      * 停止扫描 、释放camera
      */
@@ -766,9 +787,12 @@ public class ScanServices extends Service implements DecodeResultListener {
     private void displayBarcodeData(HSMDecodeResult[] barcodeData) {
         if (barcodeData.length > 0) {
             HSMDecodeResult firstResult = barcodeData[0];
+            //检测条码
+
             String qian = preferencesUitl.read(qianzhui, "");
             String hou = preferencesUitl.read(houzhui, "");
             String decodeDate = qian + firstResult.getBarcodeData() + hou;
+
             if (preferencesUitl.read(isShowdecode, true)) {
                 senBroadcasts(decodeDate);
             }

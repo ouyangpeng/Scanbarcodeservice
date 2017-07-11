@@ -32,7 +32,11 @@
                 <action android:name="com.scanservice"></action>
             </intent-filter>
         </service>
-        <service android:name="com.scanbarcodeservice.FxService"></service>
+        <service android:name="com.scanbarcodeservice.FxService">
+            <intent-filter>
+                <action android:name="com.Fxservice"></action>
+            </intent-filter>
+        </service>
 
     </application>
 </manifest>

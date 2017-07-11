@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -21,6 +22,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.honeywell.barcode.ActiveCamera;
+import com.honeywell.barcode.HSMDecodeComponent;
 import com.honeywell.barcode.HSMDecodeResult;
 import com.honeywell.barcode.HSMDecoder;
 import com.honeywell.camera.CameraManager;
@@ -29,10 +31,13 @@ import com.honeywell.license.ActivationResult;
 import com.honeywell.plugins.PluginManager;
 import com.honeywell.plugins.decode.DecodeResultListener;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
 import static android.R.attr.path;
@@ -103,7 +108,47 @@ public class ScanServices extends Service implements DecodeResultListener {
     private String TAG = "scan";
     private String[] array;
     private boolean[] isDecodeFlag;
-    private boolean isfront; //记录前置后置的变量
+    private boolean IsUtf8 = false;
+    private boolean fxservice = false;
+    BufferedWriter TorchFileWrite;
+    private HSMDecodeComponent hsmDecodeComponent;
+
+    private boolean isUTF8(byte[] sx) {
+        //Log.d(TAG, "begian to set codeset");
+        for (int i = 0; i < sx.length; ) {
+            if (sx[i] < 0) {
+                if ((sx[i] >>> 5) == 0x7FFFFFE) {
+                    if (((i + 1) < sx.length) && ((sx[i + 1] >>> 6) == 0x3FFFFFE)) {
+                        i = i + 2;
+                        IsUtf8 = true;
+                    } else {
+                        if (IsUtf8)
+                            return true;
+                        else
+                            return false;
+                    }
+                } else if ((sx[i] >>> 4) == 0xFFFFFFE) {
+                    if (((i + 2) < sx.length) && ((sx[i + 1] >>> 6) == 0x3FFFFFE) && ((sx[i + 2] >>> 6) == 0x3FFFFFE)) {
+                        i = i + 3;
+                        IsUtf8 = true;
+                    } else {
+                        if (IsUtf8)
+                            return true;
+                        else
+                            return false;
+                    }
+                } else {
+                    if (IsUtf8)
+                        return true;
+                    else
+                        return false;
+                }
+            } else {
+                i++;
+            }
+        }
+        return true;
+    }
 
     @Override
     public void onCreate() {
@@ -121,36 +166,14 @@ public class ScanServices extends Service implements DecodeResultListener {
 
     private void initAPI() {
         try {
-            //activate the API with your license key
+            //activate the API with your license key   trial-speed-tjian-03162017
             ActivationResult activationResult = ActivationManager.activate(this, "trial-jingt-tjian-05152017");
             Toast.makeText(this, "Activation Result: " + activationResult, Toast.LENGTH_LONG).show();
             //get the singleton instance of the decoder
             hsmDecoder = HSMDecoder.getInstance(this);
-            if ("front".equals(SystemProperties.get("persist.sys.scancamera"))){
-                hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);
-                isfront = true;
-            }else if ("back".equals(SystemProperties.get("persist.sys.scancamera"))){
-                hsmDecoder.setActiveCamera(ActiveCamera.REAR_FACING);
-                isfront = false;
-            }
-//            hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);
-            //set all decoder related settings
-//            hsmDecoder.enableSymbology(Symbology.UPCA);
-//            hsmDecoder.enableSymbology(Symbology.CODE128);
-//            hsmDecoder.enableSymbology(Symbology.CODE39);
-//            hsmDecoder.enableSymbology(Symbology.QR);
-//            hsmDecoder.enableSymbology(Symbology.CODE39);
-//            hsmDecoder.enableSymbology(Symbology.CODABAR);
-//            hsmDecoder.enableSymbology(Symbology.EAN13_2CHAR_ADDENDA);
-//            hsmDecoder.enableSymbology(Symbology.UPCA_2CHAR_ADDENDA);
-//            hsmDecoder.enableSymbology(Symbology.SYMS);
-//            hsmDecoder.enableFlashOnDecode(false);
-//            hsmDecoder.enableSound(true);
-//            enableDecodeFlag();
-
-//            hsmDecoder.enableSymbology(SYMS);//全部使能
             initEnableDecode();
-
+            hsmDecoder.enableSound(true);
+//            enableDecodeFlag();
             hsmDecoder.enableAimer(true);
             hsmDecoder.setAimerColor(Color.RED);
             hsmDecoder.setOverlayText(getString(R.string.show_information));
@@ -160,9 +183,19 @@ public class ScanServices extends Service implements DecodeResultListener {
             //create plug-in instance and add a result listener
 //            customPlugin = new MyCustomPlugin(this);
 //            customPlugin.addResultListener(this);
+
             //register the plug-in with the system
 //            hsmDecoder.registerPlugin(customPlugin);
-
+            hsmDecodeComponent = new HSMDecodeComponent(ScanServices.this);
+            //初始为默认后置摄像头扫码
+            boolean aaa = preferencesUitl.read(isFront, false);
+            if (preferencesUitl.read(isFront, false)) {
+                SystemProperties.set("persist.sys.scancamera", "front");
+                hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);//前置 摄像头
+            } else {
+                SystemProperties.set("persist.sys.scancamera", "back");
+                hsmDecoder.setActiveCamera(ActiveCamera.REAR_FACING);//后置 摄像头
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -185,6 +218,7 @@ public class ScanServices extends Service implements DecodeResultListener {
         filter.addAction("com.setscan.houzhui");
         filter.addAction("com.setscan.decodetype");
         filter.addAction("com.setscan.issaveimage");
+        filter.addAction("com.setscan.front");
         registerReceiver(receiver, filter);
     }
 
@@ -199,6 +233,7 @@ public class ScanServices extends Service implements DecodeResultListener {
     private static String decodeFlag = "decodeflag";
     private static String enableFlag = "enableflag";
     private static String isSaveImage = "issaveimage";
+    private static String isFront = "isfront";
 
     private static Intent Myintent = new Intent();
 
@@ -208,38 +243,61 @@ public class ScanServices extends Service implements DecodeResultListener {
         public void onReceive(Context context, Intent intent) {
             String state = intent.getAction();
             if (state.equals(START_SCAN_ACTION) || state.equals("keycode.f4.down")) {
-                if ("front".equals(SystemProperties.get("persist.sys.scancamera"))){
-                    if (!isfront){
-                        hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);
-                        isfront = true;
+                if (preferencesUitl.read(isFront, false)) {
+                    if (Build.MODEL.equals("KT55L") || Build.MODEL.equals("KT55")) {
+                        cameraManager.openCamera();
+                        hsmDecodeComponent.enableScanning(true);
+                        File TorchFileName = new File("/sys/class/misc/lm3642/torch");
+                        try {
+                            TorchFileWrite = new BufferedWriter(new FileWriter(TorchFileName, false));
+                            TorchFileWrite.write("on");
+                            TorchFileWrite.flush();
+                            TorchFileWrite.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        Myintent.setClass(context, FxService.class);
+                        Myintent.setAction("com.Fxservice");
+                        Myintent.setPackage("com.scanbarcodeservice");
+                        context.startService(Myintent);
+                        fxservice = true;
                     }
 
-                }else if ("back".equals(SystemProperties.get("persist.sys.scancamera"))){
-                    if (isfront){
-                        hsmDecoder.setActiveCamera(ActiveCamera.REAR_FACING);
-                        isfront = false;
-                    }
-
+                } else {
+                    Myintent.setClass(context, FxService.class);
+                    Myintent.setAction("com.Fxservice");
+                    Myintent.setPackage("com.scanbarcodeservice");
+                    context.startService(Myintent);
+                    fxservice = true;
                 }
-                Myintent.setClass(context, FxService.class);
-                context.startService(Myintent);
+
 //                handler.removeCallbacks(runnable);
 //                handler.postDelayed(runnable, 5000);
             } else if (state.equals(OPEN_CAMERA)) {
                 cameraManager.closeCamera();
                 SystemProperties.set("persist.sys.iscamera", "open");
                 context.stopService(Myintent);
+                fxservice = false;
             } else if (state.equals(CLOSE_CAMERA)) {
 //                cameraManager.reopenCamera();
                 SystemProperties.set("persist.sys.iscamera", "close");
             } else if (intent.getAction().equals(STOP_SCAN_ACTION)) {
                 context.stopService(Myintent);
+                fxservice = false;
             }
             switch (state) {
                 case "com.setscan.enablescan":
-//                    isVibrator = (Boolean) intent.getExtras().get("enableDecode");
                     break;
                 case "com.setscan.front":
+                    preferencesUitl.write(isFront, (Boolean) intent.getExtras().get("enableDecode"));
+                    if (preferencesUitl.read(isFront, true)) {
+                        SystemProperties.set("persist.sys.scancamera", "front");
+                        hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);//前置 摄像头
+                    } else {
+                        SystemProperties.set("persist.sys.scancamera", "back");
+                        hsmDecoder.setActiveCamera(ActiveCamera.REAR_FACING);//后置 摄像头
+                    }
                     break;
                 case "com.setscan.showdecode":
                     preferencesUitl.write(isShowdecode, (Boolean) intent.getExtras().get("enableDecode"));
@@ -253,7 +311,13 @@ public class ScanServices extends Service implements DecodeResultListener {
                     break;
                 case "com.setscan.flash":
                     preferencesUitl.write(isFlash, intent.getBooleanExtra("enableDecode", false));
-                    hsmDecoder.enableFlashOnDecode(preferencesUitl.read(isFlash, true));
+
+                    if (SystemProperties.get("persist.sys.scancamera").equals("front")) {
+                        hsmDecoder.enableFlashOnDecode(false);
+                    } else {
+                        hsmDecoder.enableFlashOnDecode(preferencesUitl.read(isFlash, true));
+                    }
+
                     break;
                 case "com.setscan.continuous":
                     preferencesUitl.write(isContinuous, intent.getBooleanExtra("enableDecode", false));
@@ -651,6 +715,7 @@ public class ScanServices extends Service implements DecodeResultListener {
 
 
     }
+
     boolean aa;
     boolean ab;
     boolean ac;
@@ -708,7 +773,6 @@ public class ScanServices extends Service implements DecodeResultListener {
         hsmDecoder.enableSymbology(HK25);
         hsmDecoder.enableSymbology(KOREA_POST);
         hsmDecoder.enableSymbology(OCR);
-
     }
 
     private String[] items = {"UPCA", "UPCA_2CHAR_ADDENDA", "UPCA_5CHAR_ADDENDA", "UPCE0", "UPCE1",
@@ -718,17 +782,35 @@ public class ScanServices extends Service implements DecodeResultListener {
             "M25", "CODE93", "CODE11", "CODABAR", "TELEPEN", "MSI", "RSS_14", "RSS_LIMITED", "RSS_EXPANDED",
             "CODABLOCK_F", "PDF417", "MICROPDF", "COMPOSITE", "COMPOSITE_WITH_UPC", "AZTEC", "MAXICODE",
             "DATAMATRIX", "DATAMATRIX_RECTANGLE", "QR", "HANXIN", "HK25", "KOREA_POST", "OCR"};
-
-
     /**
      * 停止扫描 、释放camera
      */
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            PluginManager.stopPlugins();
-            stopService(Myintent);
             cameraManager.closeCamera();
+            if (preferencesUitl.read(isFront, false)) {
+                if (Build.MODEL.equals("KT55L") || Build.MODEL.equals("KT55")) {
+                    hsmDecodeComponent.enableScanning(false);
+                    File TorchFileName = new File("/sys/class/misc/lm3642/torch");
+                    try {
+                        TorchFileWrite = new BufferedWriter(new FileWriter(TorchFileName, false));
+                        TorchFileWrite.write("off");
+                        TorchFileWrite.flush();
+                        TorchFileWrite.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    PluginManager.stopPlugins();
+                    stopService(Myintent);
+
+                }
+
+            } else {
+                PluginManager.stopPlugins();
+                stopService(Myintent);
+            }
         }
     };
 
@@ -736,11 +818,10 @@ public class ScanServices extends Service implements DecodeResultListener {
     public void onDestroy() {
         super.onDestroy();
         unregisterReceiver(receiver);
-
 //        hsmDecoder.disposeInstance();
         hsmDecoder.removeResultListener(this);
 
-        if(isWorked(this)){
+        if (isWorked(this)) {
             stopService(Myintent);
         }
 //
@@ -748,19 +829,17 @@ public class ScanServices extends Service implements DecodeResultListener {
 
     /**
      * 判断某个服务是否正在运行的方法
+     * <p>
+     * <p>
+     * 是包名+服务的类名（例如：net.loonggg.testbackstage.TestService）
      *
-
-     *   是包名+服务的类名（例如：net.loonggg.testbackstage.TestService）
      * @return true代表正在运行，false代表服务没有正在运行
      */
-    public static boolean isWorked(Context context)
-    {
-        ActivityManager myManager=(ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+    public static boolean isWorked(Context context) {
+        ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         ArrayList<ActivityManager.RunningServiceInfo> runningService = (ArrayList<ActivityManager.RunningServiceInfo>) myManager.getRunningServices(30);
-        for(int i = 0 ; i<runningService.size();i++)
-        {
-            if(runningService.get(i).service.getClassName().toString().equals("com.scanbarcodeservice.FxService"))
-            {
+        for (int i = 0; i < runningService.size(); i++) {
+            if (runningService.get(i).service.getClassName().toString().equals("com.scanbarcodeservice.FxService")) {
                 return true;
             }
         }
@@ -784,21 +863,59 @@ public class ScanServices extends Service implements DecodeResultListener {
         displayBarcodeData(hsmDecodeResults);
     }
 
+    /**
+     * 显示数据
+     *
+     * @param barcodeData 解码数据
+     */
     private void displayBarcodeData(HSMDecodeResult[] barcodeData) {
         if (barcodeData.length > 0) {
             HSMDecodeResult firstResult = barcodeData[0];
-            //检测条码
-
             String qian = preferencesUitl.read(qianzhui, "");
             String hou = preferencesUitl.read(houzhui, "");
-            String decodeDate = qian + firstResult.getBarcodeData() + hou;
-
+            String decodeDate = null;
+            if (isUTF8(firstResult.getBarcodeDataBytes())) {
+                Log.d(TAG, "is a utf8 string");
+                //Toast.makeText(this, "utf8" , Toast.LENGTH_LONG).show();
+                try {
+                    decodeDate = qian + new String(firstResult.getBarcodeDataBytes(), "utf8") + hou;
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                Log.d(TAG, "is a gbk string");
+                //Toast.makeText(this, "gbk" , Toast.LENGTH_LONG).show();
+                try {
+                    decodeDate = qian + new String(firstResult.getBarcodeDataBytes(), "gbk") + hou;
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                //String decodeDate = qian + firstResult.getBarcodeData() + hou;
+            }
             if (preferencesUitl.read(isShowdecode, true)) {
                 senBroadcasts(decodeDate);
             }
-            if (!preferencesUitl.read(isContinuous, false)) {
-                handler.removeCallbacks(runnable);
-                handler.postDelayed(runnable, 0);
+            if (preferencesUitl.read(isFront, false)) {
+                if (Build.MODEL.equals("KT55L") || Build.MODEL.equals("KT55")) {
+                    if (!preferencesUitl.read(isContinuous, false)) {
+                        cameraManager.closeCamera();
+                        hsmDecodeComponent.enableScanning(false);
+                    }
+                } else {
+                    if (!preferencesUitl.read(isContinuous, false)) {
+                        handler.removeCallbacks(runnable);
+                        handler.postDelayed(runnable, 0);
+                    }
+                }
+
+            } else {
+                if (!preferencesUitl.read(isContinuous, false)) {
+                    handler.removeCallbacks(runnable);
+                    handler.postDelayed(runnable, 0);
+                }
+            }
+            if (preferencesUitl.read(isShowdecode, true)) {
+                senBroadcasts(decodeDate);
             }
             if (preferencesUitl.read(isVibrator, true)) {
                 vibrator.vibrate(new long[]{100, 10, 10, 100}, -1);
@@ -828,33 +945,38 @@ public class ScanServices extends Service implements DecodeResultListener {
      *
      * @param bmp
      */
-    public void saveImage(Bitmap bmp) {
-        File appDir = new File(Environment.getExternalStorageDirectory(), "Boohee");
-        if (!appDir.exists()) {
-            appDir.mkdir();
-        }
-        String fileName = System.currentTimeMillis() + ".jpg";
-        File file = new File(appDir, fileName);
-        try {
-            FileOutputStream fos = new FileOutputStream(file);
-            bmp.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-            fos.flush();
-            fos.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        // 其次把文件插入到系统图库
-        try {
-            MediaStore.Images.Media.insertImage(ScanServices.this.getContentResolver(),
-                    file.getAbsolutePath(), fileName, null);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        // 最后通知图库更新
-        ScanServices.this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + path)));
-    }
+    public void saveImage(final Bitmap bmp) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                File appDir = new File(Environment.getExternalStorageDirectory(), "Boohee");
+                if (!appDir.exists()) {
+                    appDir.mkdir();
+                }
+                String fileName = System.currentTimeMillis() + ".jpg";
+                File file = new File(appDir, fileName);
+                try {
+                    FileOutputStream fos = new FileOutputStream(file);
+                    bmp.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+                    fos.flush();
+                    fos.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                // 其次把文件插入到系统图库
+                try {
+                    MediaStore.Images.Media.insertImage(ScanServices.this.getContentResolver(),
+                            file.getAbsolutePath(), fileName, null);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                // 最后通知图库更新
+                ScanServices.this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + path)));
+            }
+        }).start();
 
+    }
 
 }

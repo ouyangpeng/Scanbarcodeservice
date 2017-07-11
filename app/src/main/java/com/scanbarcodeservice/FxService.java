@@ -66,13 +66,9 @@ public class FxService extends Service {
         //调整悬浮窗显示的停靠位置为左侧置顶
         wmParams.gravity = Gravity.LEFT | Gravity.TOP;
 
-        // 以屏幕左上角为原点，设置x、y初始值
-        wmParams.x = 200;
-        wmParams.y = 100;
-
-        /*// 设置悬浮窗口长宽数据
-        wmParams.width = 200;
-        wmParams.height = 80;*/
+        //设置悬浮窗口长宽数据
+//        wmParams.width = 200;
+//        wmParams.height = 100;
 
         //设置悬浮窗口长宽数据
         wmParams.width = WindowManager.LayoutParams.WRAP_CONTENT;

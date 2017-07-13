@@ -292,6 +292,11 @@ public class ScanServices extends Service implements DecodeResultListener {
                 case "com.setscan.front":
                     preferencesUitl.write(isFront, (Boolean) intent.getExtras().get("enableDecode"));
                     if (preferencesUitl.read(isFront, true)) {
+                        //此处判断预览框服务是否还是开启的，如果开启则关闭。
+                        if (isWorked(ScanServices.this)) {
+                            stopService(Myintent);
+                        }
+
                         SystemProperties.set("persist.sys.scancamera", "front");
                         hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);//前置 摄像头
                     } else {

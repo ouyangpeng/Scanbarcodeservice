@@ -159,8 +159,8 @@ public class ScanServices extends Service implements DecodeResultListener {
         intentFilter();
         //震动
         vibrator = (Vibrator) getSystemService(Service.VIBRATOR_SERVICE);
-        hsmDecoder.enableFlashOnDecode(preferencesUitl.read(isFlash, true));
-        hsmDecoder.enableSound(preferencesUitl.read(isSound, true));
+        hsmDecoder.enableFlashOnDecode(preferencesUitl.read(isFlash, false)); //读取闪光灯设置，默认不开启闪光灯
+        hsmDecoder.enableSound(preferencesUitl.read(isSound, true)); //读取声音设置，默认有扫描音
     }
 
 
@@ -196,6 +196,7 @@ public class ScanServices extends Service implements DecodeResultListener {
                 SystemProperties.set("persist.sys.scancamera", "back");
                 hsmDecoder.setActiveCamera(ActiveCamera.REAR_FACING);//后置 摄像头
             }
+            cameraManager.closeCamera();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -271,7 +272,7 @@ public class ScanServices extends Service implements DecodeResultListener {
                     context.startService(Myintent);
                     fxservice = true;
                 }
-
+                //快手扫描没有限制时间
 //                handler.removeCallbacks(runnable);
 //                handler.postDelayed(runnable, 5000);
             } else if (state.equals(OPEN_CAMERA)) {
@@ -299,9 +300,11 @@ public class ScanServices extends Service implements DecodeResultListener {
 
                         SystemProperties.set("persist.sys.scancamera", "front");
                         hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);//前置 摄像头
+                        cameraManager.closeCamera();
                     } else {
                         SystemProperties.set("persist.sys.scancamera", "back");
                         hsmDecoder.setActiveCamera(ActiveCamera.REAR_FACING);//后置 摄像头
+                        cameraManager.closeCamera();
                     }
                     break;
                 case "com.setscan.showdecode":
@@ -903,11 +906,23 @@ public class ScanServices extends Service implements DecodeResultListener {
             if (preferencesUitl.read(isFront, false)) {
                 if (Build.MODEL.equals("KT55L") || Build.MODEL.equals("KT55")) {
                     if (!preferencesUitl.read(isContinuous, false)) {
+                        File TorchFileName = new File("/sys/class/misc/lm3642/torch");
+                        try {
+                            TorchFileWrite = new BufferedWriter(new FileWriter(TorchFileName, false));
+                            TorchFileWrite.write("off");
+                            TorchFileWrite.flush();
+                            TorchFileWrite.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
                         cameraManager.closeCamera();
                         hsmDecodeComponent.enableScanning(false);
+                        handler.removeCallbacks(runnable);
                     }
                 } else {
                     if (!preferencesUitl.read(isContinuous, false)) {
+
                         handler.removeCallbacks(runnable);
                         handler.postDelayed(runnable, 0);
                     }

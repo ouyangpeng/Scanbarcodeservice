@@ -174,8 +174,7 @@ public class ScanServices extends Service implements DecodeResultListener {
             //get the singleton instance of the decoder
             hsmDecoder = HSMDecoder.getInstance(this);
             initEnableDecode();
-            hsmDecoder.enableSound(true);
-//            enableDecodeFlag();
+ //           enableDecodeFlag();
             hsmDecoder.enableAimer(true);
             hsmDecoder.setAimerColor(Color.RED);
             hsmDecoder.setOverlayText(getString(R.string.show_information));
@@ -935,9 +934,6 @@ public class ScanServices extends Service implements DecodeResultListener {
                     handler.removeCallbacks(runnable);
                     handler.postDelayed(runnable, 0);
                 }
-            }
-            if (preferencesUitl.read(isShowdecode, true)) {
-                senBroadcasts(decodeDate);
             }
             if (preferencesUitl.read(isVibrator, true)) {
                 vibrator.vibrate(new long[]{100, 10, 10, 100}, -1);

@@ -101,6 +101,7 @@ public class ScanServices extends Service implements DecodeResultListener {
     private String STOP_SCAN_ACTION = "com.geomobile.se4500barcodestop";
     private String OPEN_CAMERA = "com.se4500.opencamera";
     private String CLOSE_CAMERA = "com.se4500.closecamera";
+    private String INIT_SERVICE = "com.scanservice.init";
     private Handler handler;
     private CameraManager cameraManager;
     private Vibrator vibrator;
@@ -161,6 +162,7 @@ public class ScanServices extends Service implements DecodeResultListener {
         vibrator = (Vibrator) getSystemService(Service.VIBRATOR_SERVICE);
         hsmDecoder.enableFlashOnDecode(preferencesUitl.read(isFlash, false)); //读取闪光灯设置，默认不开启闪光灯
         hsmDecoder.enableSound(preferencesUitl.read(isSound, true)); //读取声音设置，默认有扫描音
+        sendBroadcast(); //完成初始化后通知一下设置
     }
 
 
@@ -959,6 +961,14 @@ public class ScanServices extends Service implements DecodeResultListener {
         intents.putExtra("se4500", string);
         sendBroadcast(intents);
     }
+    //通知设置扫描服务初始化完成
+    private void sendBroadcast() {
+        Intent intent = new Intent();
+        intent.setAction(INIT_SERVICE);
+        intent.putExtra("scanserviceinit", true);
+        sendBroadcast(intent);
+    }
+
 
     /**
      * 保存扫描后的条码图片

@@ -4,4 +4,11 @@
     <string name="btn">StarScan</string>
     <string name="stop">StopScan</string>
     <string name="show_information">Place barcode completely inside viewfinder</string>
+    <string name="act_open">打开</string>
+    <string name="act_close">关闭</string>
+    <string name="act_top">输入图片上限，不输入无上限</string>
+    <string name="act_count">开始</string>
+    <string name="act_number">显示文件夹的图片存放个数</string>
+    <string name="act_del">删除图片</string>
+    <string name="act_show">开始扫描前，光标置于此处可以显示扫描结果</string>
 </resources>

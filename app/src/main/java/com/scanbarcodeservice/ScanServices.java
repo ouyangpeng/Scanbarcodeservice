@@ -114,6 +114,7 @@ public class ScanServices extends Service implements DecodeResultListener {
     BufferedWriter TorchFileWrite;
     private HSMDecodeComponent hsmDecodeComponent;
 
+    //判断扫描的内容是否是UTF8的中文内容
     private boolean isUTF8(byte[] sx) {
         //Log.d(TAG, "begian to set codeset");
         for (int i = 0; i < sx.length; ) {
@@ -239,7 +240,7 @@ public class ScanServices extends Service implements DecodeResultListener {
 
     private static Intent Myintent = new Intent();
 
-
+    //广播接收者，处理接收到的广播。目前闪光灯的控制部分仍然存在问题
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -322,9 +323,11 @@ public class ScanServices extends Service implements DecodeResultListener {
                     preferencesUitl.write(isFlash, intent.getBooleanExtra("enableDecode", false));
 
                     if (SystemProperties.get("persist.sys.scancamera").equals("front")) {
+
                         hsmDecoder.enableFlashOnDecode(false);
                     } else {
-                        hsmDecoder.enableFlashOnDecode(preferencesUitl.read(isFlash, true));
+
+                        hsmDecoder.enableFlashOnDecode(preferencesUitl.read(isFlash, false));
                     }
 
                     break;
@@ -730,6 +733,7 @@ public class ScanServices extends Service implements DecodeResultListener {
     boolean ac;
     boolean ad;
 
+        //初始化时全使能条码类型
     private void initEnableDecode() {
 
         hsmDecoder.enableSymbology(UPCA);
@@ -957,7 +961,8 @@ public class ScanServices extends Service implements DecodeResultListener {
         intents.putExtra("se4500", string);
         sendBroadcast(intents);
     }
-    //通知设置扫描服务初始化完成
+
+    //通知扫描设置页，扫描服务初始化完成
     private void sendBroadcast() {
         Intent intent = new Intent();
         intent.setAction(INIT_SERVICE);

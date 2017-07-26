@@ -89,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     //开始实时显示文件夹内文件数量
                     handler.sendEmptyMessage(1);
+                    sendBroadcast2("keycode.f4.down");
 
                     return;
                 }
@@ -108,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
                 }else{
                     etShow.requestFocus();//获得焦点
                 }
+                sendBroadcast2("keycode.f4.down");
 
             }
         });
@@ -221,6 +223,18 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra("enableDecode", b);
         sendBroadcast(intent);
     }
+
+
+    //发送广播启动扫描状态
+    private void sendBroadcast2(String stirng) {
+        Intent intent = new Intent();
+        intent.setAction(stirng);
+        sendBroadcast(intent);
+    }
+
+
+
+
     //停止后2s恢复连续扫描勾选
     private void initScanTime() {
         Handler handler = new Handler();

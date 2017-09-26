@@ -160,6 +160,7 @@ public class ScanServices extends Service implements DecodeResultListener {
         vibrator = (Vibrator) getSystemService(Service.VIBRATOR_SERVICE);
         hsmDecoder.enableFlashOnDecode(preferencesUitl.read(isFlash, false)); //读取闪光灯设置，默认不开启闪光灯
         hsmDecoder.enableSound(preferencesUitl.read(isSound, true)); //读取声音设置，默认有扫描音
+        preferencesUitl.write(isContinuous, true); //默认开启连续扫描
         sendBroadcast(); //完成初始化后通知一下设置
     }
 
@@ -188,13 +189,16 @@ public class ScanServices extends Service implements DecodeResultListener {
 //            hsmDecoder.registerPlugin(customPlugin);
             hsmDecodeComponent = new HSMDecodeComponent(ScanServices.this);
             //初始为默认后置摄像头扫码
-            boolean aaa = preferencesUitl.read(isFront, false);
-            if (preferencesUitl.read(isFront, false)) {
+            boolean aaa = preferencesUitl.read(isFront, true);
+            if (preferencesUitl.read(isFront, true)) {
                 SystemProperties.set("persist.sys.scancamera", "front");
                 hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);//前置 摄像头
             } else {
-                SystemProperties.set("persist.sys.scancamera", "back");
-                hsmDecoder.setActiveCamera(ActiveCamera.REAR_FACING);//后置 摄像头
+//                SystemProperties.set("persist.sys.scancamera", "back");
+//                hsmDecoder.setActiveCamera(ActiveCamera.REAR_FACING);//后置 摄像头
+                preferencesUitl.write(isFront, true);
+                SystemProperties.set("persist.sys.scancamera", "front");
+                hsmDecoder.setActiveCamera(ActiveCamera.FRONT_FACING);//前置 摄像头
             }
             cameraManager.closeCamera();
         } catch (Exception e) {

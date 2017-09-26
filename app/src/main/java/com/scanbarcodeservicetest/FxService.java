@@ -1,4 +1,4 @@
-package com.scanbarcodeservice;
+package com.scanbarcodeservicetest;
 
 import android.app.Service;
 import android.content.Intent;

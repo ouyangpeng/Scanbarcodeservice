@@ -1,4 +1,4 @@
-package com.scanbarcodeservice;
+package com.scanbarcodeservicetest;
 
 import android.app.ActivityManager;
 import android.app.Service;
@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -16,7 +15,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemProperties;
 import android.os.Vibrator;
-import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
@@ -40,7 +38,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
-import static android.R.attr.path;
 import static com.honeywell.barcode.Symbology.AZTEC;
 import static com.honeywell.barcode.Symbology.C128_ISBT;
 import static com.honeywell.barcode.Symbology.CODABAR;
@@ -181,6 +178,7 @@ public class ScanServices extends Service implements DecodeResultListener {
             hsmDecoder.setOverlayText(getString(R.string.show_information));
             hsmDecoder.setOverlayTextColor(Color.WHITE);
             cameraManager = CameraManager.getInstance(this);
+
             hsmDecoder.addResultListener(this);
             //create plug-in instance and add a result listener
 //            customPlugin = new MyCustomPlugin(this);
@@ -262,7 +260,7 @@ public class ScanServices extends Service implements DecodeResultListener {
                     } else {
                         Myintent.setClass(context, FxService.class);
                         Myintent.setAction("com.Fxservice");
-                        Myintent.setPackage("com.scanbarcodeservice");
+                        Myintent.setPackage("com.scanbarcodeservicetest");
                         context.startService(Myintent);
                         fxservice = true;
                     }
@@ -270,7 +268,7 @@ public class ScanServices extends Service implements DecodeResultListener {
                 } else {
                     Myintent.setClass(context, FxService.class);
                     Myintent.setAction("com.Fxservice");
-                    Myintent.setPackage("com.scanbarcodeservice");
+                    Myintent.setPackage("com.scanbarcodeservicetest");
                     context.startService(Myintent);
                     fxservice = true;
                 }
@@ -852,7 +850,7 @@ public class ScanServices extends Service implements DecodeResultListener {
         ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         ArrayList<ActivityManager.RunningServiceInfo> runningService = (ArrayList<ActivityManager.RunningServiceInfo>) myManager.getRunningServices(30);
         for (int i = 0; i < runningService.size(); i++) {
-            if (runningService.get(i).service.getClassName().toString().equals("com.scanbarcodeservice.FxService")) {
+            if (runningService.get(i).service.getClassName().toString().equals("com.scanbarcodeservicetest.FxService")) {
                 return true;
             }
         }
@@ -883,30 +881,40 @@ public class ScanServices extends Service implements DecodeResultListener {
      */
     private void displayBarcodeData(HSMDecodeResult[] barcodeData) {
         if (barcodeData.length > 0) {
-            HSMDecodeResult firstResult = barcodeData[0];
+            Log.d(TAG, barcodeData.length + "");
+
+            String decodeDate = "";
+            String decodeDatas = "";
             String qian = preferencesUitl.read(qianzhui, "");
             String hou = preferencesUitl.read(houzhui, "");
-            String decodeDate = null;
-            if (isUTF8(firstResult.getBarcodeDataBytes())) {
-                Log.d(TAG, "is a utf8 string");
-                //Toast.makeText(this, "utf8" , Toast.LENGTH_LONG).show();
-                try {
-                    decodeDate = qian + new String(firstResult.getBarcodeDataBytes(), "utf8") + hou;
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
+
+
+            for (int i = 0; i < barcodeData.length; i++){
+                HSMDecodeResult result = barcodeData[i];
+
+                if (isUTF8(result.getBarcodeDataBytes())) {
+                    Log.d(TAG, "is a utf8 string");
+                    //Toast.makeText(this, "utf8" , Toast.LENGTH_LONG).show();
+                    try {
+                        decodeDate = qian + new String(result.getBarcodeDataBytes(), "utf8") + hou;
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    Log.d(TAG, "is a gbk string");
+                    //Toast.makeText(this, "gbk" , Toast.LENGTH_LONG).show();
+                    try {
+                        decodeDate = qian + new String(result.getBarcodeDataBytes(), "gbk") + hou;
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                    //String decodeDate = qian + firstResult.getBarcodeData() + hou;
                 }
-            } else {
-                Log.d(TAG, "is a gbk string");
-                //Toast.makeText(this, "gbk" , Toast.LENGTH_LONG).show();
-                try {
-                    decodeDate = qian + new String(firstResult.getBarcodeDataBytes(), "gbk") + hou;
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-                //String decodeDate = qian + firstResult.getBarcodeData() + hou;
+                    decodeDatas = decodeDatas + decodeDate;
             }
+
             if (preferencesUitl.read(isShowdecode, true)) {
-                senBroadcasts(decodeDate);
+                senBroadcasts(decodeDatas);
             }
             if (preferencesUitl.read(isFront, false)) {
                 if (Build.MODEL.equals("KT55L") || Build.MODEL.equals("KT55")) {
@@ -944,7 +952,9 @@ public class ScanServices extends Service implements DecodeResultListener {
             }
             boolean b = preferencesUitl.read(isSaveImage, true);
             if (b) {
-                saveImage(hsmDecoder.getLastBarcodeImage(firstResult.getBarcodeBounds()));
+                //saveImage(hsmDecoder.getLastBarcodeImage(firstResult.getBarcodeBounds()));
+                saveImage(hsmDecoder.getLastImage()); //保存完整图片
+
             }
 
         }
@@ -997,14 +1007,14 @@ public class ScanServices extends Service implements DecodeResultListener {
                     e.printStackTrace();
                 }
                 // 其次把文件插入到系统图库
-                try {
-                    MediaStore.Images.Media.insertImage(ScanServices.this.getContentResolver(),
-                            file.getAbsolutePath(), fileName, null);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
-                // 最后通知图库更新
-                ScanServices.this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + path)));
+//                try {
+//                    MediaStore.Images.Media.insertImage(ScanServices.this.getContentResolver(),
+//                            file.getAbsolutePath(), fileName, null);
+//                } catch (FileNotFoundException e) {
+//                    e.printStackTrace();
+//                }
+//                // 最后通知图库更新
+//                ScanServices.this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + path)));
             }
         }).start();
 

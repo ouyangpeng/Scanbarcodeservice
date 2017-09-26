@@ -1,4 +1,4 @@
-package com.scanbarcodeservice;
+package com.scanbarcodeservicetest;
 
 import android.content.Context;
 import android.content.Intent;
@@ -13,7 +13,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.scanbarcodeservice.utils.ProgressDialogUtils;
+import com.scanbarcodeservicetest.utils.ProgressDialogUtils;
 
 import java.io.File;
 

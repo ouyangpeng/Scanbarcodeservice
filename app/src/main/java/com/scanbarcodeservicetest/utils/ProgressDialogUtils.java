@@ -1,4 +1,4 @@
-package com.scanbarcodeservice.utils;
+package com.scanbarcodeservicetest.utils;
 
 import android.app.ProgressDialog;
 import android.content.Context;

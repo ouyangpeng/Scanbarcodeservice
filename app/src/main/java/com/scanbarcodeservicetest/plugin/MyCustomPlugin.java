@@ -1,4 +1,4 @@
-package com.scanbarcodeservice.plugin;
+package com.scanbarcodeservicetest.plugin;
 
 import android.content.Context;
 import android.content.Intent;
@@ -9,8 +9,8 @@ import android.widget.TextView;
 import com.honeywell.barcode.HSMDecodeResult;
 import com.honeywell.plugins.PluginResultListener;
 import com.honeywell.plugins.SwiftPlugin;
-import com.scanbarcodeservice.FxService;
-import com.scanbarcodeservice.R;
+import com.scanbarcodeservicetest.FxService;
+import com.scanbarcodeservicetest.R;
 
 import java.util.List;
 

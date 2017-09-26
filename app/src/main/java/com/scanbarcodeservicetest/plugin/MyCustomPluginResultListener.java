@@ -1,4 +1,4 @@
-package com.scanbarcodeservice.plugin;
+package com.scanbarcodeservicetest.plugin;
 
 import com.honeywell.barcode.HSMDecodeResult;
 import com.honeywell.plugins.PluginResultListener;
